@@ -288,3 +288,61 @@ class KuntaGMLtoQGIS:
             command = "ogr2ogr -f sqlite -dsco spatialite=yes " + final_file_path + ".sqlite" + " gmlas:" + os.path.join(self.path, "data", file_name_mod) + " " + ogr2ogr_convert_params
             QgsMessageLog.logMessage("calling: " + command, 'KuntaGMLPlugin', QgsMessageLog.INFO)
             os.system(command)
+
+            uri = QgsDataSourceURI()
+
+            uri.setDatabase(final_file_path + ".sqlite")
+            if feature == 'akaava:Kaava':
+                uri.setDataSource('', 'kaavamaarays','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'kaavamaarays', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+                uri.setDataSource('', 'kaava_muukaavatunnus','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'kaava_muukaavatunnus', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+                uri.setDataSource('', 'kaava_yhteisetkaavamaaraykse__kaavamaarayskohde_kaavamaarays','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'kaava_yhteisetkaavamaaraykse__kaavamaarayskohde_kaavamaarays', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+            elif feature == 'akaava:Suojelualue':
+                uri.setDataSource('', 'aluesijainti','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'aluesijainti', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+                uri.setDataSource('', 'suojelualue','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'suojelualue', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+            elif feature == 'kanta:Rakennus':
+                uri.setDataSource('', 'rakennus','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'rakennus', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+                uri.setDataSource('', 'rakennus_osoite_osoitenimi_teksti','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'rakennus_osoite_osoitenimi_teksti', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+                uri.setDataSource('', 'sijainnit','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'sijainnit', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+            elif feature == 'mkok:HallinnollinenAlue':
+                uri.setDataSource('', 'hallinnollinenalue_nimi_teksti','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'hallinnollinenalue_nimi_teksti', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+                uri.setDataSource('', 'teksti','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'teksti', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+                uri.setDataSource('', 'teksti_teksti','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'teksti_teksti', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+            elif feature == 'mkos:OSoite':
+                uri.setDataSource('', 'osoite_osoitenimi_teksti','','','id')
+                vlayer = QgsVectorLayer(uri.uri(), 'osoite_osoitenimi_teksti', 'spatialite')
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+
+
+            driver = ogr.GetDriverByName('SQLite')
+            #driver.SetMetadataItem("LIST_ALL_TABLES", "YES") # NOTE: Crashes
+            data_source = driver.Open(final_file_path + ".sqlite", 0)
+            layer_count = data_source.GetLayerCount()
+            for i in range(layer_count):
+                layer = data_source.GetLayerByIndex(i)
+                layer_name = layer.GetName()
+                QgsMessageLog.logMessage("A layer: " + layer_name, 'KuntaGMLPlugin', QgsMessageLog.INFO)
+                new_layer_name = file_name_start + " " + layer_name
+                new_layer = QgsVectorLayer(final_file_path + ".sqlite" + "|layerid=" + str(i), new_layer_name, "ogr")
+                QgsMapLayerRegistry.instance().addMapLayers([new_layer])
